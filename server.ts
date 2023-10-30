@@ -6,6 +6,7 @@ import compression from "compression";
 import serveStatic from "serve-static";
 import { createServer as createViteServer } from "vite";
 import { fileURLToPath } from "url";
+import { getApi } from "./src/server/routes/api.js";
 const isTest = process.env.NODE_ENV === "test" || !!process.env.VITE_TEST_BUILD;
 
 const __filename = fileURLToPath(import.meta.url);
@@ -60,6 +61,8 @@ async function createServer(isProd = process.env.NODE_ENV === "production") {
   }
   const stylesheets = getStyleSheets();
 
+  app.use('/api', getApi)
+
   // 1. Read index.html
   const baseTemplate = await fs.readFile(isProd ? resolve("client/index.html") : resolve("index.html"), "utf-8");
   const productionBuildPath = path.join(__dirname, "./server/entry-server.js");
@@ -99,10 +102,13 @@ async function createServer(isProd = process.env.NODE_ENV === "production") {
       next(e);
     }
   });
+
+  return app
+}
+
+createServer().then(app => {
   const port = process.env.PORT || 7456;
   app.listen(Number(port), "0.0.0.0", () => {
     console.log(`App is listening on http://localhost:${port}`);
   });
-}
-
-createServer();
+});
